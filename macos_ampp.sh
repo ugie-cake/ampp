@@ -26,6 +26,8 @@ cecho() { local c="$1"; shift; printf "%b%s%b\n" "$c" "$*" "\033[0m"; }
 info()  { cecho "\033[36m" "ℹ︎ $*"; }
 ok()    { cecho "\033[32m" "✔ $*"; }
 warn()  { cecho "\033[33m" "⚠ $*"; }
+alert()  { cecho "\033[30;43m" "⚠ $*"; }
+bang()  { cecho "\033[37;41m" "⚠ $*"; }
 err()   { cecho "\033[31m" "✘ $*" >&2; }
 
 confirm() {
@@ -85,13 +87,20 @@ start_service() {
 }
 
 info "Welcome to Industry Experience Development Environment Setup Script for macOS!"
+echo 
 warn "Read on-screen information carefully as this script may make significant changes to your operating system."
+echo 
 warn "This script is for Apple Silicon Macs with the default zsh shell. If you're using an Intel Mac and/or bash, the script will halt and you should consult your studio mentors."
+
+echo -e "\n\n"
+alert "If the script is not working as expected, open an issue at"
+alert "https://github.com/ugie-cake/ampp/issues"
+echo -e "\n\n"
 
 # ---------- CPU architecture check ----------
 arch_name="$(uname -m)"
 if [[ "$arch_name" != "arm64" ]]; then
-  echo "✘ This script is intended for Apple Silicon (arm64) Macs only. Detected: $arch_name"
+  bang "This script is intended for Apple Silicon (arm64) Macs only. Detected: $arch_name"
   echo "  Exiting without making changes."
   exit 1
 fi
@@ -99,17 +108,18 @@ echo "✔ Apple Silicon (arm64) detected. Continuing..."
 
 # ---------- Shell check ----------
 if [[ -z "${SHELL:-}" || "${SHELL##*/}" != "zsh" ]]; then
-  echo "✘ This script requires your login shell to be zsh. Detected SHELL: ${SHELL:-unset}"
+  bang "This script requires your login shell to be zsh. Detected SHELL: ${SHELL:-unset}"
   exit 1
 fi
 
 echo "✔ SHELL indicates zsh (${SHELL}). Continuing..."
-
 # ---------- 0) Homebrew presence ----------
 if ! brew_exists; then
   warn "Homebrew not found. It is required for this setup."
   info "The official installer from brew.sh will be used."
+  echo 
   warn "Homebrew installation requires 'sudo' access (you'll need to type in your account password once during the procedure), and this process can take quite a while depends on your Internet speed. "
+  echo 
   if confirm "Install Homebrew now?"; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     ok "Homebrew installed. Initialising Homebrew in current terminal session..."
@@ -128,8 +138,12 @@ fi
 HOMEBREW_PREFIX="$(brew --prefix)"
 ok "Using Homebrew prefix: $HOMEBREW_PREFIX"
 
+echo -e "\n\n"
+
 # ---------- 1) Brew update ----------
 run_step "Update Homebrew and formulae (brew update)" brew update || true
+
+echo -e "\n\n"
 
 # ---------- 2) Detect existing installs ----------
 CANDIDATES=(httpd mysql mariadb php php@8.4 composer phpmyadmin)
@@ -139,15 +153,21 @@ for f in "${CANDIDATES[@]}"; do
 done
 
 if ((${#FOUND[@]})); then
-  warn "Detected installed packages: ${FOUND[*]}"
-  warn "To continue this script, all packages listed above will need to be uninstalled first. "
+  warn "Detected installed packages:"
+  warn "${FOUND[*]}"
+  echo 
+  alert "To continue this script, all packages listed above will need to be uninstalled first. "
   cat << EOS
+
 Uninstalling may remove binaries, configs, and data directories under Homebrew.
 This can include webroot, database data under $HOMEBREW_PREFIX/var/mysql,
 and custom .conf files. All data that is not backed up will be lost!
 
 EOS
-  if confirm "Proceed to STOP services and UNINSTALL ALL of: httpd, mysql, mariadb, php, php@8.4, composer, phpmyadmin ?"; then
+  echo -e "\n"
+  alert "Proceed to STOP services and UNINSTALL ALL of:"
+  echo -e "\nhttpd, mysql, mariadb, php, php@8.4, composer, phpmyadmin\n"
+  if confirm "Would you like to continue?"; then
     # Stop and uninstall ALL targets regardless of which were found (per requirement)
     for svc in httpd mysql mariadb php php@8.4; do
       stop_service_if_present "$svc" || true
@@ -179,8 +199,12 @@ else
   ok "No existing target packages detected."
 fi
 
+echo -e "\n\n"
+
 # ---------- 3) Install required packages ----------
 run_step "Install httpd php@8.4 mariadb composer phpmyadmin" brew install httpd php@8.4 mariadb composer phpmyadmin
+
+echo -e "\n\n"
 
 # ---------- 4) Configure various components ----------
 # Add PHP 8.4 to system path
@@ -196,7 +220,7 @@ fi
 echo
 info "Next is to add php@8.4 to system PATH. This will make PHP v8.4 as default PHP interpreter in your terminal."
 echo "If you already see something like 'export PATH=/opt/homebrew/opt/php@8.4'"
-echo "in your '.zshrc' file, you should select no. Otherwise, you should select yes. "
+echo "in your '.zshrc' file, you should type 'n' for no. Otherwise, you should type 'y' for yes. "
 if confirm "Add php@8.4 to system PATH?"; then
   echo >> "$HOME/.zshrc"
   echo 'export PATH="/opt/homebrew/opt/php@8.4/bin:$PATH"' >> "$HOME/.zshrc"
@@ -517,14 +541,14 @@ start_service "mariadb"
 
 ok "All done."
 echo
-info "Find the webroot folder of Apache..."
+alert "Find the webroot folder of Apache..."
 echo "The root of your web server is located at '$HOMEBREW_PREFIX/var/www' - Files inside this folder are served at http://localhost:8080"
 echo "This folder will open for you in Finder - add it to the sidebar for quick access!"
 echo
 
 open "$HOMEBREW_PREFIX/var/www"
 
-info "Next steps:"
+alert "Next steps:"
 echo " - Run 'php -v' command and check if PHP 8.4 is the default PHP interpreter"
 echo "   If PHP version is higher than 8.4.x, open another terminal and try again. "
 echo " - Run 'composer about' command and check if Composer is installed correctly"
