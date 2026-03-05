@@ -2,7 +2,7 @@
 
 #
 # Industry Experience Development Environment Setup Script for macOS
-# Last updated: 20th February 2026
+# Last updated: 5th March 2026
 # Copyright (c) 2026 Monash University
 # Distributed under MIT license
 #
@@ -249,7 +249,7 @@ if confirm "Update phpMyAdmin configuration file in $PMA_CFG with proper configu
   * Needs to be a 32-bytes long string of random bytes. See FAQ 2.10.
   */
 -\$cfg['blowfish_secret'] = ''; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
-+\$cfg['blowfish_secret'] = 'RgRis6hy1Ny+mGoktp/AxpGDAGq97DIE'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
++\$cfg['blowfish_secret'] = '$NEW_SECRET'; /* YOU MUST FILL IN THIS FOR COOKIE AUTH! */
  
  /**
   * Servers configuration
@@ -261,7 +261,7 @@ if confirm "Update phpMyAdmin configuration file in $PMA_CFG with proper configu
 +\$cfg['Servers'][\$i]['auth_type'] = 'config';
  /* Server parameters */
  \$cfg['Servers'][\$i]['host'] = 'localhost';
-+\$cfg['Servers'][\$i]['user'] = 'macosvm';
++\$cfg['Servers'][\$i]['user'] = '$CURRENT_USER';
  \$cfg['Servers'][\$i]['compress'] = false;
 -\$cfg['Servers'][\$i]['AllowNoPassword'] = false;
 +\$cfg['Servers'][\$i]['AllowNoPassword'] = true;
