@@ -83,6 +83,9 @@ alert "If the script is not working as expected, open an issue at"
 alert "https://github.com/ugie-cake/ampp/issues"
 echo -e "\n\n"
 
+# Load Homebrew Shell Env, in case something goes wrong
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # Fetch phpmyadmin config file
 PMA_CFG="$HOMEBREW_PREFIX/etc/phpmyadmin.config.inc.php"
 
